@@ -38,6 +38,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>demoweb</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
