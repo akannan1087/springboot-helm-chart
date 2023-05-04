@@ -2,18 +2,15 @@
 # Build and push an image to Azure Container Registry
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
-trigger:
-- master
-
 resources:
 - repo: self
 
 variables:
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: '59deaa7f-b2f7-4787-a400-d17c01730192'
-  imageRepository: 'akannanspringboothelmchart'
+  dockerRegistryServiceConnection: '9eb6db1f-53ee-48f5-8116-1fc683a231d9'
+  imageRepository: 'akannandockerspringboot'
   containerRegistry: 'myacrrepo43.azurecr.io'
-  dockerfilePath: '$(Build.SourcesDirectory)/demoweb/Dockerfile'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
 
   # Agent VM image name
@@ -30,7 +27,8 @@ stages:
     steps:
     - task: Maven@4
       inputs:
-        mavenPomFile: 'demoweb/pom.xml'
+        mavenPomFile: 'pom.xml'
+        goals: 'install'
         publishJUnitResults: false
         javaHomeOption: 'JDKVersion'
         mavenVersionOption: 'Default'
@@ -46,3 +44,20 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
+          latest
+    - task: HelmDeploy@0
+      inputs:
+        command: 'package'
+        chartPath: 'springboot'
+    - task: HelmDeploy@0
+      inputs:
+        connectionType: 'Azure Resource Manager'
+        azureSubscription: 'Pay-As-You-Go (735d5c5d-6148-48b7-8f67-4af45c25fc19)'
+        azureResourceGroup: 'myResourceGroup'
+        kubernetesCluster: 'myAKSCluster'
+        namespace: 'helm-demo'
+        command: 'install'
+        chartType: 'Name'
+        chartName: 'springboot'
+        releaseName: 'myrelease-$(Build.BuildId)'
+        waitForExecution: false
